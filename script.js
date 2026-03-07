@@ -265,3 +265,40 @@ clearBtn.addEventListener("click", function () {
 });
 
 renderLogs();
+function drawTriggerChart(patterns) {
+
+    const ctx = document.getElementById('triggerChart');
+
+    if (!ctx) return;
+
+    const labels = patterns.map(p => p.name);
+    const values = patterns.map(p => p.rate);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Meltdown Rate (%)',
+                data: values,
+                backgroundColor: [
+                    '#ff6384',
+                    '#36a2eb',
+                    '#ffcd56',
+                    '#4bc0c0',
+                    '#9966ff',
+                    '#ff9f40'
+                ]
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+}
