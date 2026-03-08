@@ -373,7 +373,7 @@ function renderWhatIf(sleep, noise, sugar, screen, routine, meal, currentPred) {
         return;
     }
     wrap.innerHTML = `
-        <div class="what-if-title"><strong>What if?</strong></div>
+        <div class="what-if-title"><strong>What if?</strong> Try improving one factor—click to see how the prediction changes.</div>
         <div class="what-if-btns">
             ${suggestions.map((s) =>
         `<button type="button" class="what-if-btn" data-key="${s.key}">
@@ -445,6 +445,7 @@ predictBtn.addEventListener("click", async function () {
             const contribHtml = contributors.length ? `<br><br><strong>Risk factors today:</strong> ${contributors.join(", ")}` : "";
             const chartHtml = contributors.length ? `
                 <div class="contributor-chart-wrap">
+                    <div class="contributor-chart-label">How much each factor affects the prediction (longer bar = stronger influence)</div>
                     <canvas id="contributorChart"></canvas>
                 </div>
             ` : "";

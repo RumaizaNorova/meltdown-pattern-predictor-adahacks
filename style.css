@@ -378,6 +378,13 @@ td.meltdown-no {
     max-width: 360px;
 }
 
+.contributor-chart-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
 .contributor-chart-wrap canvas {
     max-height: 140px;
 }
