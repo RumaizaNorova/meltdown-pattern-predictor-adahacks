@@ -284,7 +284,8 @@ async function loadPredictGrid() {
 
 function getPredictionKey(sleep, noise, sugar, screen, routine, meal) {
     const sleepRounded = Math.round(Math.max(4, Math.min(12, parseFloat(sleep) || 7)) * 2) / 2;
-    return `${sleepRounded}|${noise}|${sugar}|${screen}|${routine}|${meal}`;
+    const sleepStr = Number.isInteger(sleepRounded) ? sleepRounded + ".0" : String(sleepRounded);
+    return `${sleepStr}|${noise}|${sugar}|${screen}|${routine}|${meal}`;
 }
 
 function getTopContributors(sleep, noise, sugar, screen, routine, meal) {
