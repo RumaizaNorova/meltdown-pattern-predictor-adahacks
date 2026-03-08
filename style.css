@@ -369,6 +369,56 @@ td.meltdown-no {
     color: #9D174D;
 }
 
+/* Contributor chart (prediction risk factors) */
+.contributor-chart-wrap {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(237, 233, 254, 0.5);
+    border-radius: 12px;
+    max-width: 360px;
+}
+
+.contributor-chart-wrap canvas {
+    max-height: 140px;
+}
+
+/* What-if scenarios */
+.what-if-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.what-if-title {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.what-if-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.what-if-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    background: var(--color-purple-tint);
+    color: #5B21B6;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.what-if-btn:hover {
+    background: var(--color-purple-pastel);
+    transform: translateY(-1px);
+}
+
 /* Nested card inside insights (chart container) */
 .card .card {
     margin-top: 16px;

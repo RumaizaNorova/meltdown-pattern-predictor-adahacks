@@ -290,7 +290,7 @@ function getPredictionKey(sleep, noise, sugar, screen, routine, meal) {
 
 function getTopContributors(sleep, noise, sugar, screen, routine, meal) {
     const contrib = [];
-    if (parseFloat(sleep) < 7) contrib.push("Low sleep (&lt; 7h)");
+    if (parseFloat(sleep) < 7) contrib.push("Low sleep (<7h)");
     if (noise === "High") contrib.push("High sensory environment");
     if (noise === "Medium") contrib.push("Medium sensory environment");
     if (routine === "Yes") contrib.push("Routine change");
@@ -298,6 +298,123 @@ function getTopContributors(sleep, noise, sugar, screen, routine, meal) {
     if (sugar === "Yes") contrib.push("Late sugar intake");
     if (meal === "Yes") contrib.push("Late meal");
     return contrib;
+}
+
+let contributorChartInstance = null;
+
+function drawContributorChart(contributors) {
+    const ctx = document.getElementById("contributorChart");
+    if (!ctx) return;
+    if (contributorChartInstance) {
+        contributorChartInstance.destroy();
+        contributorChartInstance = null;
+    }
+    contributorChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: contributors,
+            datasets: [{
+                label: "Model weight",
+                data: contributors.map((_, i) => 100 - i * 15),
+                backgroundColor: "rgba(124, 58, 237, 0.25)",
+                borderColor: "rgba(124, 58, 237, 0.6)",
+                borderWidth: 2,
+                borderRadius: 6,
+            }],
+        },
+        options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+            },
+            scales: {
+                x: { display: false, max: 100 },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { size: 12 }, color: "#78716C" },
+                },
+            },
+        },
+    });
+}
+
+function renderWhatIf(sleep, noise, sugar, screen, routine, meal, currentPred) {
+    const wrap = document.getElementById("whatIfSection");
+    if (!wrap) return;
+    const sleepNum = parseFloat(sleep) || 7;
+    const suggestions = [];
+    if (sleepNum < 7) {
+        const key8 = getPredictionKey("8", noise, sugar, screen, routine, meal);
+        const pred8 = predictGrid[key8];
+        if (pred8 && pred8.probability < currentPred.probability) {
+            suggestions.push({ label: "Sleep 8h", key: key8, pred: pred8 });
+        }
+    }
+    if (noise !== "Low") {
+        const keyLow = getPredictionKey(sleep, "Low", sugar, screen, routine, meal);
+        const predLow = predictGrid[keyLow];
+        if (predLow && predLow.probability < currentPred.probability) {
+            suggestions.push({ label: "Low sensory", key: keyLow, pred: predLow });
+        }
+    }
+    if (routine === "Yes") {
+        const keyRoutine = getPredictionKey(sleep, noise, sugar, screen, "No", meal);
+        const predRoutine = predictGrid[keyRoutine];
+        if (predRoutine && predRoutine.probability < currentPred.probability) {
+            suggestions.push({ label: "No routine change", key: keyRoutine, pred: predRoutine });
+        }
+    }
+    if (suggestions.length === 0) {
+        wrap.innerHTML = "";
+        return;
+    }
+    wrap.innerHTML = `
+        <div class="what-if-title"><strong>What if?</strong></div>
+        <div class="what-if-btns">
+            ${suggestions.map((s) =>
+        `<button type="button" class="what-if-btn" data-key="${s.key}">
+                    ${s.label}: ${s.pred.probability}%
+                </button>`
+    ).join("")}
+        </div>
+    `;
+    wrap.querySelectorAll(".what-if-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-key");
+            const pred = predictGrid[key];
+            if (pred) {
+                const [s, n, sug, scr, r, m] = key.split("|");
+                const tierClass = pred.tier === "Low" ? "insight-box" : pred.tier === "Medium" ? "warning-box" : "disclaimer-box";
+                const contrib = pred.contributors ? pred.contributors : getTopContributors(s, n, sug, scr, r, m);
+                const contribHtml = contrib.length ? `<br><br><strong>Risk factors:</strong> ${contrib.join(", ")}` : "";
+                const predBox = predictionResult.querySelector(".insight-box, .warning-box, .disclaimer-box");
+                if (predBox) {
+                    predBox.outerHTML = `
+                        <div class="${tierClass}">
+                            <strong>Estimated meltdown likelihood: ${pred.probability}%</strong>
+                            <br>Risk level: <strong>${pred.tier}</strong>${contribHtml}
+                        </div>
+                    `;
+                }
+                if (contributorChartInstance) {
+                    if (contrib.length) {
+                        contributorChartInstance.data.labels = contrib;
+                        contributorChartInstance.data.datasets[0].data = contrib.map((_, i) => 100 - i * 15);
+                        contributorChartInstance.update();
+                    } else {
+                        contributorChartInstance.destroy();
+                        contributorChartInstance = null;
+                        const wrap = predictionResult.querySelector(".contributor-chart-wrap");
+                        if (wrap) wrap.remove();
+                    }
+                }
+            }
+        });
+    });
 }
 
 predictBtn.addEventListener("click", async function () {
@@ -324,14 +441,23 @@ predictBtn.addEventListener("click", async function () {
             predictionResult.innerHTML = '<div class="warning-box">Prediction not available for this combination. Try rounding sleep to the nearest half hour.</div>';
         } else {
             const tierClass = pred.tier === "Low" ? "insight-box" : pred.tier === "Medium" ? "warning-box" : "disclaimer-box";
-            const contributors = getTopContributors(sleep, noise, sugar, screen, routine, meal);
+            const contributors = (pred.contributors && pred.contributors.length) ? pred.contributors : getTopContributors(sleep, noise, sugar, screen, routine, meal);
             const contribHtml = contributors.length ? `<br><br><strong>Risk factors today:</strong> ${contributors.join(", ")}` : "";
+            const chartHtml = contributors.length ? `
+                <div class="contributor-chart-wrap">
+                    <canvas id="contributorChart"></canvas>
+                </div>
+            ` : "";
             predictionResult.innerHTML = `
                 <div class="${tierClass}">
                     <strong>Estimated meltdown likelihood: ${pred.probability}%</strong>
                     <br>Risk level: <strong>${pred.tier}</strong>${contribHtml}
                 </div>
+                ${chartHtml}
+                <div id="whatIfSection" class="what-if-section"></div>
             `;
+            if (contributors.length) drawContributorChart(contributors);
+            renderWhatIf(sleep, noise, sugar, screen, routine, meal, pred);
         }
         predictionCard.style.display = "block";
         predictionCard.scrollIntoView({ behavior: "smooth" });
