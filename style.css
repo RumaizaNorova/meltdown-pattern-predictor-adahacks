@@ -372,21 +372,21 @@ td.meltdown-no {
 /* Contributor chart (prediction risk factors) */
 .contributor-chart-wrap {
     margin-top: 16px;
-    padding: 12px;
+    padding: 16px;
     background: rgba(237, 233, 254, 0.5);
     border-radius: 12px;
-    max-width: 360px;
+    width: 100%;
+    max-width: 480px;
 }
 
 .contributor-chart-label {
     font-size: 0.85rem;
     color: var(--color-text-muted);
-    margin-bottom: 10px;
-    line-height: 1.4;
+    margin-bottom: 12px;
 }
 
 .contributor-chart-wrap canvas {
-    max-height: 140px;
+    height: 180px !important;
 }
 
 /* What-if scenarios */

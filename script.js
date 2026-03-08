@@ -325,8 +325,8 @@ function drawContributorChart(contributors) {
         options: {
             indexAxis: "y",
             responsive: true,
-            maintainAspectRatio: true,
-            aspectRatio: 2,
+            maintainAspectRatio: false,
+            aspectRatio: 1.2,
             plugins: {
                 legend: { display: false },
                 tooltip: { enabled: false },
@@ -335,7 +335,7 @@ function drawContributorChart(contributors) {
                 x: { display: false, max: 100 },
                 y: {
                     grid: { display: false },
-                    ticks: { font: { size: 12 }, color: "#78716C" },
+                    ticks: { font: { size: 13 }, color: "#78716C" },
                 },
             },
         },
@@ -373,7 +373,7 @@ function renderWhatIf(sleep, noise, sugar, screen, routine, meal, currentPred) {
         return;
     }
     wrap.innerHTML = `
-        <div class="what-if-title"><strong>What if?</strong> Try improving one factor—click to see how the prediction changes.</div>
+        <div class="what-if-title"><strong>What if?</strong> Click to see improved scenarios.</div>
         <div class="what-if-btns">
             ${suggestions.map((s) =>
         `<button type="button" class="what-if-btn" data-key="${s.key}">
@@ -445,7 +445,7 @@ predictBtn.addEventListener("click", async function () {
             const contribHtml = contributors.length ? `<br><br><strong>Risk factors today:</strong> ${contributors.join(", ")}` : "";
             const chartHtml = contributors.length ? `
                 <div class="contributor-chart-wrap">
-                    <div class="contributor-chart-label">How much each factor affects the prediction (longer bar = stronger influence)</div>
+                    <div class="contributor-chart-label">Longer bar = stronger influence</div>
                     <canvas id="contributorChart"></canvas>
                 </div>
             ` : "";
