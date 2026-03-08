@@ -1,5 +1,7 @@
 # Meltdown Pattern Predictor
 
+**Live:** https://meltdown-pattern-predictor-adahacks.vercel.app/
+
 > A smart tracking tool that helps caregivers of autistic children identify what triggers meltdowns—so families can plan better, stress less, and support their kids with confidence.
 
 Built at **Ada Hacks**.

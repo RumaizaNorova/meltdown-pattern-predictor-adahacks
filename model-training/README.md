@@ -2,25 +2,21 @@
 
 This folder trains a machine learning model to predict meltdown likelihood from daily factors. The model is trained on synthetic data produced by the `synthetic-data-generator` module.
 
-## Model Choice: Random Forest
+## Model Choice: Logistic Regression
 
-We use a Random Forest classifier rather than logistic regression, XGBoost, or a neural network.
+We use Logistic Regression because it won a fair benchmark (see `benchmark.py`).
 
-**Why Random Forest:**
+**Benchmark results (5-fold CV on 10k synthetic logs):**
 
-1. **Non-linear relationships.** The synthetic data generator includes interaction effects (e.g., low sleep amplifies the effect of high noise). Random forests capture these automatically without manual feature engineering. Logistic regression would require explicit interaction terms.
+| Model | Accuracy | AUC-ROC | Brier |
+|-------|----------|---------|-------|
+| Logistic Regression | 64.2% | 0.676 | 0.226 |
+| Random Forest | 63.2% | 0.653 | 0.230 |
+| Random Forest (deeper) | 62.7% | 0.646 | 0.233 |
 
-2. **Mixed feature types.** We have one numeric feature (sleep hours), one categorical (noise level), and four binary features. Trees handle mixed types naturally. No scaling or normalization is needed.
+Logistic Regression has the best AUC and calibration. This makes sense: the synthetic data is generated with a logistic-style formula, so the model matches the data structure.
 
-3. **Interpretability.** Feature importance scores show which factors matter most. This supports the "top contributors" explanation in the prediction UI. XGBoost also provides importance, but Random Forest is simpler to tune and explain.
-
-4. **Robustness.** Random forests resist overfitting through bagging and feature subsampling. With 7 features and 10k samples, we avoid the risk of memorizing the training set. Neural networks would be unnecessary for this problem size.
-
-5. **Calibrated probabilities.** We use `predict_proba` for the meltdown risk percentage. Tree ensembles produce reasonably calibrated probabilities for balanced or mildly imbalanced data. For heavily imbalanced data, we use `class_weight="balanced"` to offset any skew.
-
-**Why not XGBoost?** XGBoost often yields slightly better accuracy on tabular data but requires more hyperparameter tuning. For our use case, Random Forest performs well with minimal tuning. We can switch later if needed.
-
-**Why not logistic regression?** It would need hand-crafted interaction terms (e.g., sleep × noise) to match the data structure. The synthetic generator explicitly models these; Random Forest learns them from the data.
+**Caveat:** On real caregiver data, the true relationship may be non-linear or include interactions we did not model. If you later get real logs and retrain, run `benchmark.py` again to compare models on that data. Logistic Regression may or may not remain best.
 
 ## Pipeline
 
@@ -28,9 +24,13 @@ The saved artifact is a sklearn Pipeline with two steps:
 
 1. **Preprocessing.** Converts raw inputs (sleep hours, noise level, Yes/No fields) into a numeric matrix. Binary fields become 0/1. Noise level is one-hot encoded (Low, Medium, High).
 
-2. **Random Forest.** 200 trees, max depth 10, min samples per leaf 5, class weight balanced.
+2. **Logistic Regression.** Max iter 1000, class weight balanced.
 
 The pipeline is saved with pickle so the inference API can load it and call `predict_proba` with the same input format.
+
+## Benchmarking
+
+Run `python benchmark.py` to compare models with 5-fold cross-validation. Uses the same data and reports accuracy, AUC-ROC, and Brier score. Install `xgboost` to include it in the comparison.
 
 ## Prerequisites
 

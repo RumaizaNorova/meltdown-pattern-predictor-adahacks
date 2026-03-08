@@ -2,9 +2,8 @@
 """
 Train meltdown prediction model on synthetic logs.
 
-Uses a Random Forest classifier. Saves a sklearn Pipeline (preprocessing +
-model) so inference can use the same encoding. Run the synthetic data
-generator first to produce training data.
+Uses Logistic Regression (benchmark winner on synthetic data). Run
+benchmark.py to compare models. Saves a predictor pipeline for inference.
 
 Usage:
     python train.py [--data path] [--output path]
@@ -17,7 +16,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -27,6 +26,7 @@ from sklearn.metrics import (
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 FEATURE_COLUMNS = [
     "sleepHours",
@@ -66,16 +66,15 @@ def load_data(path: Path) -> Tuple[List[dict], np.ndarray]:
 
 
 def build_pipeline() -> Pipeline:
-    """Build preprocessing + Random Forest pipeline."""
+    """Build preprocessing + Logistic Regression pipeline."""
     return Pipeline(
         steps=[
             ("preprocess", _Preprocessor()),
+            ("scale", StandardScaler()),
             (
                 "classifier",
-                RandomForestClassifier(
-                    n_estimators=200,
-                    max_depth=10,
-                    min_samples_leaf=5,
+                LogisticRegression(
+                    max_iter=1000,
                     class_weight="balanced",
                     random_state=RANDOM_STATE,
                 ),
@@ -181,10 +180,12 @@ def main():
         "n_test": int(len(X_test)),
     }
 
-    # Feature importance (Random Forest)
-    rf = pipeline.named_steps["classifier"]
+    # Feature importance (scaled coefficients for Logistic Regression)
+    clf = pipeline.named_steps["classifier"]
+    scaler = pipeline.named_steps["scale"]
     feature_names = pipeline.named_steps["preprocess"].get_feature_names_out()
-    importances = dict(zip(feature_names, map(float, rf.feature_importances_)))
+    coef_scaled = clf.coef_[0] * scaler.scale_
+    importances = dict(zip(feature_names, map(float, np.abs(coef_scaled))))
     metrics["feature_importance"] = importances
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
